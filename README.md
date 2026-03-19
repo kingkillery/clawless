@@ -17,7 +17,7 @@
 </table>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/clawless-runtime"><img src="https://img.shields.io/npm/v/clawless-runtime?color=cb3837&label=npm&logo=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/clawcontainer"><img src="https://img.shields.io/npm/v/clawcontainer?color=cb3837&label=npm&logo=npm" alt="npm version" /></a>
   <a href="https://github.com/open-gitagent/clawless/releases"><img src="https://img.shields.io/github/v/release/open-gitagent/clawless?color=blue&logo=github" alt="GitHub release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://github.com/open-gitagent/clawless/stargazers"><img src="https://img.shields.io/github/stars/open-gitagent/clawless?style=social" alt="GitHub stars" /></a>
@@ -67,13 +67,13 @@ npm run dev
 
 ```bash
 # Install as a dependency
-npm install clawless-runtime
+npm install clawcontainer
 ```
 
 ## SDK Usage
 
 ```typescript
-import { ClawContainer } from 'clawless-runtime';
+import { ClawContainer } from 'clawcontainer';
 
 const cc = new ClawContainer('#app', {
   template: 'gitclaw',
