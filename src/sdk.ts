@@ -307,6 +307,24 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
     remove: (path: string): Promise<void> => {
       return this._container.remove(path);
     },
+    grep: async (pattern: string | RegExp, dir?: string): Promise<Array<{ path: string; line: number; text: string }>> => {
+      const re = typeof pattern === 'string' ? new RegExp(pattern, 'i') : pattern;
+      const paths = await this._container.listWorkspaceFiles(dir);
+      const results: Array<{ path: string; line: number; text: string }> = [];
+      for (const p of paths) {
+        if (p.endsWith('/')) continue;
+        try {
+          const content = await this._container.readFile(`workspace/${p}`);
+          const lines = content.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            if (re.test(lines[i])) {
+              results.push({ path: p, line: i + 1, text: lines[i] });
+            }
+          }
+        } catch { /* skip unreadable/binary files */ }
+      }
+      return results;
+    },
   };
 
   // ─── Git ──────────────────────────────────────────────────────────────────

@@ -98,6 +98,7 @@ export interface ClawContainerSDK {
     list(dir?: string): Promise<string[]>;
     mkdir(path: string): Promise<void>;
     remove(path: string): Promise<void>;
+    grep(pattern: string | RegExp, dir?: string): Promise<Array<{ path: string; line: number; text: string }>>;
   };
   git: {
     clone(url: string, token?: string): Promise<void>;
