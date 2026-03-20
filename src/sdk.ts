@@ -212,10 +212,10 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
       this.emit('ready');
     } else {
       const config = agentConfig as AgentConfig;
-      const isGitclaw = config.package === 'gitclaw';
+      const isPicoagent = config.package === 'picoagent';
 
-      if (isGitclaw) {
-        // Gitclaw flow — check API keys
+      if (isPicoagent) {
+        // Picoagent flow — check API keys
         const savedConfig = this._ui.getSavedConfig();
         if (!savedConfig) {
           this._ui.showConfigPanel();
@@ -224,12 +224,12 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
         }
 
         const envConfig = this._ui.getSavedConfig()!;
-        this._terminal.write('\x1b[90m[ClawLess] Launching gitclaw…\x1b[0m\r\n\r\n');
-        this._audit.log('status.change', 'launching gitclaw', undefined, { source: 'boot' });
+        this._terminal.write('\x1b[90m[ClawLess] Launching picoagent…\x1b[0m\r\n\r\n');
+        this._audit.log('status.change', 'launching picoagent', undefined, { source: 'boot' });
 
         try {
           await this._container.configureEnv(envConfig);
-          await this._container.startGitclaw(this._terminal);
+          await this._container.startPicoagent(this._terminal);
         } catch (e) {
           this._terminal.write(`\r\n\x1b[31m[ClawLess] Launch failed: ${(e as Error).message}\x1b[0m\r\n`);
           this.emit('error', e as Error);

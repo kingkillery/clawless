@@ -114,7 +114,7 @@ npm install clawcontainer
 import { ClawContainer } from 'clawcontainer';
 
 const cc = new ClawContainer('#app', {
-  template: 'gitclaw',
+  template: 'picoagent',
   env: { ANTHROPIC_API_KEY: 'sk-...' }
 });
 

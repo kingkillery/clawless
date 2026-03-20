@@ -14,13 +14,13 @@ export interface ContainerTemplate {
   tabs?: TabDefinition[];
 }
 
-/** Built-in gitclaw template — mirrors the previous hardcoded defaults. */
-export const GITCLAW_TEMPLATE: ContainerTemplate = {
-  name: 'gitclaw',
-  description: 'Default gitclaw agent template',
+/** Built-in picoagent template — mirrors the previous hardcoded defaults. */
+export const PICOAGENT_TEMPLATE: ContainerTemplate = {
+  name: 'picoagent',
+  description: 'Default picoagent agent template',
   agent: {
-    package: 'gitclaw',
-    version: '1.1.4',
+    package: 'picoagent',
+    version: '1.0.0',
     entry: 'dist/index.js',
     args: ['--dir', '<home>/workspace'],
   },
@@ -33,7 +33,7 @@ export class TemplateRegistry {
 
   constructor() {
     // Seed with built-in templates
-    this.register(GITCLAW_TEMPLATE);
+    this.register(PICOAGENT_TEMPLATE);
   }
 
   register(template: ContainerTemplate): void {
@@ -64,14 +64,14 @@ export class TemplateRegistry {
  * Resolve a template input to a concrete ContainerTemplate.
  * - string → lookup by name in registry
  * - object → use directly
- * - undefined → default to 'gitclaw'
+ * - undefined → default to 'picoagent'
  */
 export function resolveTemplate(
   input: string | ContainerTemplate | undefined,
   registry: TemplateRegistry,
 ): ContainerTemplate {
   if (input === undefined) {
-    return registry.get('gitclaw')!;
+    return registry.get('picoagent')!;
   }
   if (typeof input === 'string') {
     const tpl = registry.get(input);

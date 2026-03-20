@@ -6,7 +6,7 @@ import type { ContainerTemplate } from './templates.js';
 
 /** Configuration for launching an agent inside the container. */
 export interface AgentConfig {
-  /** npm package name (e.g. 'gitclaw') */
+  /** npm package name (e.g. 'picoagent') */
   package: string;
   /** Package version (e.g. '1.1.4'). Defaults to 'latest'. */
   version?: string;
@@ -20,7 +20,7 @@ export interface AgentConfig {
 
 /** Options for creating a ClawContainer instance. */
 export interface ClawContainerOptions {
-  /** Agent to launch. Pass `false` to skip agent launch entirely. Default: gitclaw. */
+  /** Agent to launch. Pass `false` to skip agent launch entirely. Default: picoagent. */
   agent?: AgentConfig | false;
   /** Extra workspace files to mount: flat map of relative path → content */
   workspace?: Record<string, string>;
@@ -30,7 +30,7 @@ export interface ClawContainerOptions {
   env?: Record<string, string>;
   /** Shell script to run after install, before agent launch */
   startupScript?: string;
-  /** Template to use: name of a registered template, or a ContainerTemplate object. Default: 'gitclaw'. */
+  /** Template to use: name of a registered template, or a ContainerTemplate object. Default: 'picoagent'. */
   template?: string | ContainerTemplate;
   /** Plugins to register before start */
   plugins?: ClawContainerPlugin[];

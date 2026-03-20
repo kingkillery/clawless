@@ -1130,7 +1130,7 @@ export class UIManager {
 
     try {
       await this.container.configureEnv({ provider, model, envVars });
-      showMsg(msg, 'Saved. Restart gitclaw (/quit) to apply.', 'success');
+      showMsg(msg, 'Saved. Restart picoagent (/quit) to apply.', 'success');
     } catch (e) {
       showMsg(msg, `Error: ${(e as Error).message}`, 'error');
     }
