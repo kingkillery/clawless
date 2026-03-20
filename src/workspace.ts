@@ -87,16 +87,16 @@ export function buildWorkspaceFiles(extra?: Record<string, string>) {
   return tree;
 }
 
-/** Returns the inner-container package.json that requests gitclaw. */
+/** Returns the inner-container package.json that requests picoagent. */
 export function buildContainerPackageJson(extraDeps?: Record<string, string>) {
   return JSON.stringify({
-    name: 'gitclaw-workspace',
+    name: 'picoagent-workspace',
     version: '1.0.0',
     private: true,
     // npm creates node_modules/.bin/git → ../../git-stub.js with execute bit
     bin: { git: './git-stub.js' },
     dependencies: {
-      gitclaw: '1.1.4',
+      picoagent: '1.0.0',
       ...extraDeps,
     },
     // baileys has a git-SSH dep (libsignal-node) unreachable in WebContainer

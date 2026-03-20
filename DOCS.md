@@ -165,7 +165,7 @@ interface ContainerTemplate {
 }
 ```
 
-Built-in template: `gitclaw` (gitclaw@1.1.4 agent).
+Built-in template: `picoagent` (picoagent@1.0.0 agent).
 
 YAML template format example:
 
@@ -173,8 +173,8 @@ YAML template format example:
 name: my-template
 description: My custom template
 agent:
-  package: gitclaw
-  version: 1.1.4
+  package: picoagent
+  version: 1.0.0
   entry: dist/index.js
   args: ["--dir", "<home>/workspace"]
 workspace:

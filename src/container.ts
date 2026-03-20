@@ -274,7 +274,7 @@ export class ContainerManager {
           }
         }
       } catch {
-        // Non-fatal — gitclaw will try its own auth
+        // Non-fatal — picoagent will try its own auth
       }
     }
 
@@ -289,7 +289,7 @@ export class ContainerManager {
       vars: maskedVars,
     }, { source: 'user' });
 
-    // Write .env file so gitclaw (and its voice server) can read keys
+    // Write .env file so picoagent (and its voice server) can read keys
     const envLines: string[] = [];
     for (const [key, val] of Object.entries(this.apiEnvVars)) {
       envLines.push(`${key}=${val}`);
@@ -329,24 +329,24 @@ export class ContainerManager {
   }
 
   /**
-   * Spawn gitclaw DIRECTLY with a PTY — not inside jsh.
+   * Spawn picoagent DIRECTLY with a PTY — not inside jsh.
    * jsh doesn't forward the PTY to child processes, breaking interactive REPLs.
    */
-  async startGitclaw(terminal: TerminalManager): Promise<void> {
+  async startPicoagent(terminal: TerminalManager): Promise<void> {
     if (!this.wc) throw new Error('Container not booted');
     this.setStatus('ready');
 
     const { cols, rows } = terminal.dimensions;
     const homeDir = await this.getHomeDir();
 
-    const spawnCmd = `node ${homeDir}/node_modules/gitclaw/dist/index.js --dir ${homeDir}/workspace`;
+    const spawnCmd = `node ${homeDir}/node_modules/picoagent/dist/index.js --dir ${homeDir}/workspace`;
     this.enforcePolicy('process.spawn', spawnCmd, { activeProcesses: this.activeProcessCount });
     this.audit?.log('process.spawn', spawnCmd, undefined, { source: 'agent' });
     this.activeProcessCount++;
 
     this.shellProcess = await this.wc.spawn(
       'node',
-      [`${homeDir}/node_modules/gitclaw/dist/index.js`, '--dir', `${homeDir}/workspace`],
+      [`${homeDir}/node_modules/picoagent/dist/index.js`, '--dir', `${homeDir}/workspace`],
       {
         terminal: { cols, rows },
         env: {
@@ -367,7 +367,7 @@ export class ContainerManager {
       }),
     );
 
-    // Wire keystrokes directly to gitclaw stdin (no jsh in between)
+    // Wire keystrokes directly to picoagent stdin (no jsh in between)
     this.shellWriter = this.shellProcess.input.getWriter();
     terminal.onData((data) => {
       this.shellWriter?.write(data);
@@ -376,18 +376,18 @@ export class ContainerManager {
 
     window.addEventListener('resize', () => this.resizeShell(terminal));
 
-    // Restart gitclaw when it exits (e.g. user types /quit)
+    // Restart picoagent when it exits (e.g. user types /quit)
     this.shellProcess.exit.then((code) => {
       this.activeProcessCount--;
-      this.audit?.log('process.exit', `gitclaw exited`, { exitCode: code }, { source: 'agent' });
-      terminal.write('\r\n\x1b[90m[ClawLess] gitclaw exited. Restarting in 2s…\x1b[0m\r\n');
-      setTimeout(() => this.startGitclaw(terminal), 2000);
+      this.audit?.log('process.exit', `picoagent exited`, { exitCode: code }, { source: 'agent' });
+      terminal.write('\r\n\x1b[90m[ClawLess] picoagent exited. Restarting in 2s…\x1b[0m\r\n');
+      setTimeout(() => this.startPicoagent(terminal), 2000);
     });
   }
 
   /**
    * Start a raw jsh shell for file exploration / debugging.
-   * Note: interactive Node.js REPLs won't work inside jsh — use startGitclaw() instead.
+   * Note: interactive Node.js REPLs won't work inside jsh — use startPicoagent() instead.
    */
   async startShell(terminal: TerminalManager): Promise<void> {
     if (!this.wc) throw new Error('Container not booted');
