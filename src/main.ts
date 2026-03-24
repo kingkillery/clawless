@@ -30,6 +30,15 @@ async function boot() {
     ?.split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+  const runtime = params.get('runtime')
+    ?? localStorage.getItem('clawchef_runtime')
+    ?? 'webcontainer';
+  const runnerUrl = params.get('runner')
+    ?? localStorage.getItem('clawchef_runnerUrl')
+    ?? 'http://127.0.0.1:6234';
+
+  localStorage.setItem('clawchef_runtime', runtime);
+  localStorage.setItem('clawchef_runnerUrl', runnerUrl);
 
   // Hide picker, show loading status
   const picker = document.getElementById('template-picker');
@@ -39,7 +48,7 @@ async function boot() {
   if (status) status.style.display = '';
   if (progressBar) progressBar.style.display = '';
 
-  const cc = new ClawContainer('#app', { template, toolPresets });
+  const cc = new ClawContainer('#app', { template, toolPresets, runtime: runtime as 'webcontainer' | 'external-local', runnerUrl });
   cc.start().catch(console.error);
 
   // Expose SDK globally for console access and external scripts

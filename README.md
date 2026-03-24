@@ -6,13 +6,13 @@
     <td>
       <h1>ClawLess</h1>
       <p><em>No server required to run Claw Agents, use ClawLess to run on browser!</em></p>
-      <p><strong>A serverless browser-based runtime for Claw AI Agents powered by WebContainers</strong></p>
+      <p><strong>A browser-based runtime for Claw AI Agents with WebContainer and local external runner modes</strong></p>
       <ul>
-        <li>Run Claw Agents without a Server — entirely on-browser via WebContainers (WASM)</li>
+        <li>Run Claw Agents entirely on-browser via WebContainers (WASM) or on a local sandbox runner</li>
         <li>Complete Audit &amp; Policy driven sandboxing</li>
         <li>Built on <a href="https://gitagent.sh">GitAgent</a> Standard</li>
         <li>Pluggable SDK with template-based agent bootstrapping</li>
-        <li>Secure by design — fully isolated WASM sandbox, no access to host system</li>
+        <li>Secure by design — isolated browser runtime and localhost sandbox runner</li>
       </ul>
     </td>
   </tr>
@@ -40,7 +40,7 @@
 
 ---
 
-Run, observe, and control AI agents entirely in the browser — no backend required. ClawLess provides a full sandboxed Node.js environment via WebContainers (WASM) with built-in editor, terminal, policy engine, and audit logging.
+Run, observe, and control AI agents in the browser or against a local sandbox runner. ClawLess provides a full sandboxed Node.js environment via WebContainers (WASM) plus an `external-local` mode backed by a localhost daemon and rootless Podman.
 
 ---
 
@@ -53,6 +53,18 @@ Run, observe, and control AI agents entirely in the browser — no backend requi
 <p align="center"><em>An AI agent using learned skills to build a 9-slide Lobster presentation with pptxgenjs — installed and executed entirely in the browser.</em></p>
 
 ClawLess runs a full Node.js runtime in the browser via WebContainers — that means access to **3.4 million+ npm packages**. In this example, the agent installs `pptxgenjs`, generates a polished PowerPoint file with charts, images, and styled layouts, and saves it to the virtual filesystem — all without a server. The agent even learns and crystallizes reusable skills for future tasks.
+
+For local execution, start the daemon first:
+
+```bash
+npm run locald
+```
+
+Then open the UI with the external runtime selected:
+
+```text
+http://localhost:5173/?runtime=external-local&runner=http://127.0.0.1:6234
+```
 
 <p align="center">
   <img src="screenshot.png" alt="ClawLess — AI Agent building a calculator app inside a WASM sandbox" width="900" />
@@ -83,6 +95,7 @@ Control agent behavior with a built-in policy system. Define file access rules, 
 ## Key Features
 
 - **WebContainer-powered sandboxed runtime (WASM)** — full OS-level isolation in the browser
+- **Local external runner mode** — rootless Podman sandboxing via a localhost daemon
 - **Monaco Editor with multi-file tabs** — rich editing experience out of the box
 - **xterm.js terminal with full PTY support** — real terminal sessions, not a toy console
 - **GitHub integration** — clone and push repositories via the GitHub API
@@ -101,6 +114,11 @@ git clone https://github.com/open-gitagent/clawless.git
 cd clawless
 npm install
 npm run dev
+```
+
+```bash
+# Optional local sandbox runner
+npm run locald
 ```
 
 ```bash
@@ -129,6 +147,8 @@ cc.on('ready', () => console.log('Container ready!'));
 |---|---|
 | **ClawContainer** | SDK facade — the single entry point for consumers |
 | **ContainerManager** | WebContainer orchestration and lifecycle |
+| **ExternalRunnerClient** | Browser-side client for the localhost sandbox daemon |
+| **runner/locald.mjs** | Local Podman-backed daemon for external-local sessions |
 | **PolicyEngine** | YAML-based guardrails enforcing file, process, and network rules |
 | **AuditLog** | Complete event trail for every action inside the container |
 | **GitService** | GitHub API integration (clone, commit, push) |
@@ -159,7 +179,7 @@ ClawLess is configured through environment variables passed to the `ClawContaine
 | `GOOGLE_API_KEY` | Google AI / Gemini API key |
 | `CLAWLESS_MODEL` | Model selection (e.g. `claude-sonnet-4-20250514`, `gpt-4o`) |
 
-All runtime state is persisted to `localStorage` under the `clawchef_` prefix, so sessions survive page reloads.
+All runtime state is persisted to `localStorage` under the `clawchef_` prefix, so sessions survive page reloads. Runtime selection and runner URL are persisted too.
 
 Launch URLs can also preload tool presets, for example `?template=openclaw&tools=pptx,spreadsheet`.
 

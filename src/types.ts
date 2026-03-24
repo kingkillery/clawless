@@ -4,6 +4,17 @@ import type { WebContainer } from '@webcontainer/api';
 import type { AuditEntry, AuditSource, AuditLevel, AuditEvent } from './audit.js';
 import type { ContainerTemplate } from './templates.js';
 
+export type RuntimeKind = 'webcontainer' | 'external-local';
+export type AgentKind = 'node-package' | 'workspace-command' | 'external-command';
+
+export type ContainerStatus = 'booting' | 'installing' | 'ready' | 'error';
+
+export interface ContainerEnv {
+  provider: string;
+  model: string;
+  envVars: Record<string, string>;
+}
+
 /** A reusable launch preset that pre-installs tool packages and prompt docs. */
 export interface ToolPresetDefinition {
   /** Stable preset id, used in URLs and registries. */
@@ -25,6 +36,8 @@ export type ToolPresetInput = string | ToolPresetDefinition;
 
 /** Configuration for launching an agent inside the container. */
 export interface AgentConfig {
+  /** Launch style for the agent. Defaults to node-package. */
+  kind?: AgentKind;
   /** npm package name (e.g. 'gitclaw') */
   package: string;
   /** Package version (e.g. '1.1.4'). Defaults to 'latest'. */
@@ -33,6 +46,12 @@ export interface AgentConfig {
   entry: string;
   /** Extra CLI args passed to node */
   args?: string[];
+  /** External or workspace command to run when kind !== node-package. */
+  command?: string;
+  /** Container image to use for external runners. */
+  image?: string;
+  /** Working directory inside the runner. */
+  workdir?: string;
   /** Extra environment variables for the agent process */
   env?: Record<string, string>;
   /** npm overrides to stub out incompatible native dependencies */
@@ -53,6 +72,10 @@ export interface ClawContainerOptions {
   startupScript?: string;
   /** Template to use: name of a registered template, or a ContainerTemplate object. Default: 'gitclaw'. */
   template?: string | ContainerTemplate;
+  /** Runtime backend to use. Default: webcontainer. */
+  runtime?: RuntimeKind;
+  /** Local runner daemon base URL for external-local runtime. */
+  runnerUrl?: string;
   /** Named or inline tool presets to install before launch. */
   toolPresets?: ToolPresetInput[];
   /** Plugins to register before start */

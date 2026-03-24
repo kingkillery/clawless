@@ -3,6 +3,7 @@
 import type { WebContainer } from '@webcontainer/api';
 import { TerminalManager } from './terminal.js';
 import { ContainerManager } from './container.js';
+import { ExternalRunnerClient } from './external-runner.js';
 import { UIManager } from './ui.js';
 import { AuditLog, type AuditEntry, type AuditSource, type AuditLevel, type AuditEvent } from './audit.js';
 import { PolicyEngine } from './policy.js';
@@ -25,6 +26,7 @@ import type {
   TabDefinition,
   ToolPresetDefinition,
 } from './types.js';
+import type { ExecutionBackend } from './backend.js';
 import {
   type ContainerTemplate,
   TemplateRegistry,
@@ -66,7 +68,7 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
   }
 
   // ─── Instance ────────────────────────────────────────────────────────────
-  private _container: ContainerManager;
+  private _container: ExecutionBackend;
   private _terminal: TerminalManager;
   private _ui: UIManager;
   private _audit: AuditLog;
@@ -83,7 +85,9 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
     this._options = options ?? {};
 
     this._terminal = new TerminalManager();
-    this._container = new ContainerManager();
+    this._container = (this._options.runtime ?? 'webcontainer') === 'external-local'
+      ? new ExternalRunnerClient(this._options.runnerUrl)
+      : new ContainerManager();
     this._audit = new AuditLog();
     this._policy = new PolicyEngine();
     this._plugins = new PluginManager();
@@ -184,9 +188,10 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
 
     // Extract agent config for boot (package.json generation)
     const resolvedAgent = opts.agent !== false ? opts.agent as AgentConfig | undefined : undefined;
+    const runtimeLabel = this._container.runtime === 'external-local' ? 'external runner' : 'WebContainer';
 
     // Step 1: Boot
-    this._terminal.write('\x1b[90m[ClawLess] Booting WebContainer…\x1b[0m\r\n');
+    this._terminal.write(`\x1b[90m[ClawLess] Booting ${runtimeLabel}…\x1b[0m\r\n`);
     this._audit.log('status.change', 'boot sequence started', undefined, { source: 'boot' });
 
     try {
@@ -196,8 +201,9 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
         agentPackage: resolvedAgent?.package,
         agentVersion: resolvedAgent?.version,
         agentOverrides: resolvedAgent?.overrides,
+        image: resolvedAgent?.image,
       });
-      this._audit.log('status.change', 'webcontainer booted', undefined, { source: 'boot' });
+      this._audit.log('status.change', `${this._container.runtime} booted`, undefined, { source: 'boot' });
     } catch (e) {
       this._terminal.write(`\r\n\x1b[31m[ClawLess] Boot failed: ${(e as Error).message}\x1b[0m\r\n`);
       this.emit('error', e as Error);
@@ -298,6 +304,7 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
   }
 
   async stop(): Promise<void> {
+    await this._container.stop();
     this._plugins.dispatchDestroy(this);
     this._started = false;
   }

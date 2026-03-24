@@ -548,3 +548,21 @@ export function buildContainerPackageJson(opts?: {
     },
   }, null, 2);
 }
+
+/** Flatten a WebContainer-style file tree into a relative path → contents map. */
+export function flattenWorkspaceTree(tree: Record<string, any>, prefix = ''): Record<string, string> {
+  const flat: Record<string, string> = {};
+
+  for (const [name, node] of Object.entries(tree)) {
+    const path = prefix ? `${prefix}/${name}` : name;
+    if (node?.file?.contents != null) {
+      flat[path] = typeof node.file.contents === 'string'
+        ? node.file.contents
+        : new TextDecoder().decode(node.file.contents);
+    } else if (node?.directory) {
+      Object.assign(flat, flattenWorkspaceTree(node.directory, path));
+    }
+  }
+
+  return flat;
+}

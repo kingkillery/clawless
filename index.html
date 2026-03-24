@@ -144,6 +144,15 @@
           <section id="config-panel" class="panel">
             <h3>Generic API Key</h3>
 
+            <label for="runtime-select">Runtime</label>
+            <select id="runtime-select">
+              <option value="webcontainer">WebContainer</option>
+              <option value="external-local">External Local</option>
+            </select>
+
+            <label for="runner-url">Runner URL</label>
+            <input id="runner-url" type="url" placeholder="http://127.0.0.1:6234" />
+
             <label for="provider-select">Provider</label>
             <select id="provider-select">
               <option value="anthropic">Anthropic</option>

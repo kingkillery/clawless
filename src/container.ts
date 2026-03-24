@@ -5,17 +5,12 @@ import { AuditLog, type AuditSource } from './audit.js';
 import { NETWORK_HOOK_CJS } from './network-hook.js';
 import { PolicyEngine, PolicyDeniedError, type PolicyAction } from './policy.js';
 import { GitService, type GitFile } from './git-service.js';
-import type { AgentConfig } from './types.js';
+import type { AgentConfig, ContainerEnv, ContainerStatus } from './types.js';
+import { normalizeProviderEnv } from './provider-env.js';
+import type { ContainerBootOptions, ExecutionBackend } from './backend.js';
 
-export type ContainerStatus = 'booting' | 'installing' | 'ready' | 'error';
-
-export interface ContainerEnv {
-  provider: string;
-  model: string;
-  envVars: Record<string, string>;
-}
-
-export class ContainerManager {
+export class ContainerManager implements ExecutionBackend {
+  readonly runtime = 'webcontainer' as const;
   private wc: WebContainer | null = null;
   private shellProcess: WebContainerProcess | null = null;
   private shellWriter: WritableStreamDefaultWriter<string> | null = null;
@@ -35,6 +30,7 @@ export class ContainerManager {
   private gitService: GitService | null = null;
 
   get status(): ContainerStatus { return this._status; }
+  get hasClonedRepo(): boolean { return this.gitService !== null; }
 
   setAuditLog(a: AuditLog): void { this.audit = a; }
   setPolicy(p: PolicyEngine): void { this.policy = p; }
@@ -145,13 +141,7 @@ export class ContainerManager {
   }
 
   /** Boot the WebContainer and mount all workspace files. */
-  async boot(opts?: {
-    workspace?: Record<string, string>;
-    services?: Record<string, string>;
-    agentPackage?: string;
-    agentVersion?: string;
-    agentOverrides?: Record<string, string>;
-  }): Promise<void> {
+  async boot(opts?: ContainerBootOptions): Promise<void> {
     this.setStatus('booting');
     this.wc = await WebContainer.boot();
 
@@ -573,9 +563,6 @@ export class ContainerManager {
     return sha;
   }
 
-  /** Check if a repo has been cloned. */
-  get hasClonedRepo(): boolean { return this.gitService !== null; }
-
   /** Expose the raw WebContainer instance for direct user access. */
   getWebContainer(): WebContainer | null { return this.wc; }
 
@@ -720,6 +707,20 @@ export class ContainerManager {
       }
     });
   }
+
+  async stop(): Promise<void> {
+    try {
+      this.shellWriter?.close();
+    } catch { /* ignore */ }
+    this.shellProcess = null;
+    this.shellWriter = null;
+    this._status = 'booting';
+    this.onStatusChange?.('booting');
+  }
+
+  async restart(): Promise<void> {
+    await this.stop();
+  }
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -747,37 +748,4 @@ async function recursiveList(
   }
 
   return results;
-}
-
-function normalizeProviderEnv(provider: string, envVars: Record<string, string>): Record<string, string> {
-  const normalized = { ...envVars };
-
-  if (provider === 'openrouter') {
-    if (normalized['OPENROUTER_API_KEY'] && !normalized['OPENAI_API_KEY']) {
-      normalized['OPENAI_API_KEY'] = normalized['OPENROUTER_API_KEY'];
-    }
-    if (!normalized['OPENAI_BASE_URL']) {
-      normalized['OPENAI_BASE_URL'] = 'https://openrouter.ai/api/v1';
-    }
-  }
-
-  if (provider === 'zai') {
-    if (normalized['ZAI_API_KEY'] && !normalized['OPENAI_API_KEY']) {
-      normalized['OPENAI_API_KEY'] = normalized['ZAI_API_KEY'];
-    }
-    if (!normalized['OPENAI_BASE_URL']) {
-      normalized['OPENAI_BASE_URL'] = 'https://api.z.ai/api/coding/paas/v4';
-    }
-  }
-
-  if (provider === 'minimax') {
-    if (normalized['MINIMAX_API_KEY'] && !normalized['ANTHROPIC_API_KEY']) {
-      normalized['ANTHROPIC_API_KEY'] = normalized['MINIMAX_API_KEY'];
-    }
-    if (!normalized['ANTHROPIC_BASE_URL']) {
-      normalized['ANTHROPIC_BASE_URL'] = 'https://api.minimax.io/anthropic';
-    }
-  }
-
-  return normalized;
 }

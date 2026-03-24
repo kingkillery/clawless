@@ -1,8 +1,8 @@
-import type { ContainerManager, ContainerStatus } from './container.js';
+import type { ExecutionBackend } from './backend.js';
 import { createEditorInstance, openFileModel, getModelContent, closeFileModel, disposeAll, initMonacoTheme } from './monaco-editor.js';
 import type { AuditLog } from './audit.js';
 import { PolicyEngine } from './policy.js';
-import type { TabDefinition } from './types.js';
+import type { ContainerStatus, TabDefinition } from './types.js';
 
 // ─── Provider → env var key ──────────────────────────────────────────────────
 interface ProviderDefinition {
@@ -79,7 +79,7 @@ interface Tab {
 }
 
 export class UIManager {
-  private container: ContainerManager;
+  private container: ExecutionBackend;
   private audit: AuditLog;
   private policy: PolicyEngine;
   private activePanelId: string | null = null;
@@ -100,7 +100,7 @@ export class UIManager {
   // Custom tab tracking
   private customTabPaths = new Set<string>();
 
-  constructor(container: ContainerManager, audit: AuditLog, policy: PolicyEngine) {
+  constructor(container: ExecutionBackend, audit: AuditLog, policy: PolicyEngine) {
     this.container = container;
     this.audit = audit;
     this.policy = policy;
@@ -1064,6 +1064,14 @@ export class UIManager {
   // ─── Config panel ──────────────────────────────────────────────────────────
 
   private bindConfigPanel(): void {
+    const runtimeSel = document.getElementById('runtime-select') as HTMLSelectElement;
+    runtimeSel.addEventListener('change', () => {
+      const runnerUrl = document.getElementById('runner-url') as HTMLInputElement;
+      if (runtimeSel.value === 'external-local' && !runnerUrl.value) {
+        runnerUrl.value = 'http://127.0.0.1:6234';
+      }
+    });
+
     const providerSel = document.getElementById('provider-select') as HTMLSelectElement;
     providerSel.addEventListener('change', () => {
       this.populateModelOptions();
@@ -1155,9 +1163,14 @@ export class UIManager {
   }
 
   private restoreConfig(): void {
+    const runtime = localStorage.getItem(`${LS_PREFIX}runtime`) ?? 'webcontainer';
+    const runnerUrl = localStorage.getItem(`${LS_PREFIX}runnerUrl`) ?? 'http://127.0.0.1:6234';
     const provider = localStorage.getItem(`${LS_PREFIX}provider`);
     const model    = localStorage.getItem(`${LS_PREFIX}model`);
     const envJson  = localStorage.getItem(`${LS_PREFIX}envVars`);
+
+    (document.getElementById('runtime-select') as HTMLSelectElement).value = runtime;
+    (document.getElementById('runner-url') as HTMLInputElement).value = runnerUrl;
 
     if (provider) {
       (document.getElementById('provider-select') as HTMLSelectElement).value = provider;
@@ -1196,6 +1209,8 @@ export class UIManager {
   }
 
   private async saveConfig(): Promise<void> {
+    const runtime = (document.getElementById('runtime-select') as HTMLSelectElement).value as 'webcontainer' | 'external-local';
+    const runnerUrl = (document.getElementById('runner-url') as HTMLInputElement).value.trim() || 'http://127.0.0.1:6234';
     const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
     const model    = (document.getElementById('model-select') as HTMLInputElement).value.trim();
     const envVars  = this.getEnvRows();
@@ -1211,13 +1226,17 @@ export class UIManager {
       return;
     }
 
+    localStorage.setItem(`${LS_PREFIX}runtime`, runtime);
+    localStorage.setItem(`${LS_PREFIX}runnerUrl`, runnerUrl);
     localStorage.setItem(`${LS_PREFIX}provider`, provider);
     localStorage.setItem(`${LS_PREFIX}model`,    model);
     localStorage.setItem(`${LS_PREFIX}envVars`,  JSON.stringify(envVars));
 
     try {
       await this.container.configureEnv({ provider, model, envVars });
-      showMsg(msg, 'Saved. Restart gitclaw (/quit) to apply.', 'success');
+      showMsg(msg, runtime === 'external-local'
+        ? 'Saved. Reload to apply runtime changes.'
+        : 'Saved. Restart gitclaw (/quit) to apply.', 'success');
     } catch (e) {
       showMsg(msg, `Error: ${(e as Error).message}`, 'error');
     }

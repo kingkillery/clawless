@@ -33,7 +33,7 @@
 
 ## Architecture Overview
 
-ClawLess is a browser-based AI agent container runtime built on WebContainers. Data flow:
+ClawLess is a browser-based AI agent runtime with two execution backends: WebContainers in the browser and an `external-local` runner backed by a localhost daemon. Data flow:
 
 ```
 User Input → ClawContainer (SDK) → ContainerManager → WebContainer
@@ -62,6 +62,8 @@ interface ClawContainerOptions {
   startupScript?: string;
   template?: string | ContainerTemplate;
   toolPresets?: Array<string | ToolPresetDefinition>;
+  runtime?: 'webcontainer' | 'external-local';
+  runnerUrl?: string;
   plugins?: ClawContainerPlugin[];
   tabs?: TabDefinition[];
 }
@@ -151,7 +153,7 @@ interface TabDefinition {
 
 ## Template System
 
-Templates pre-configure agent, workspace, services, env, tabs.
+Templates pre-configure agent, workspace, services, env, tabs, and optional runtime defaults.
 
 ```typescript
 interface ContainerTemplate {
@@ -190,6 +192,8 @@ startupScript: npm run build
 ```
 
 Register via `ClawContainer.registerTemplate(template)` or pass template name/object in options.
+
+Templates may also declare `runtime`, `runnerUrl`, `image`, and `kind`-style launch hints through their agent configuration.
 
 Tool presets let you pre-install common pure-JS tool packages and prompt docs at launch time. Built-ins currently include `pptx`, `spreadsheet`, `pdf`, and `charts`. You can also pass them through launch URLs such as `?template=openclaw&tools=pptx,spreadsheet`.
 
@@ -369,12 +373,13 @@ Configure through the UI config panel or programmatically via options.env:
 
 Config persisted with `clawchef_` prefix:
 
-- `clawchef_provider`, `clawchef_model`, `clawchef_envVars`, `clawchef_policy`
+- `clawchef_provider`, `clawchef_model`, `clawchef_envVars`, `clawchef_policy`, `clawchef_runtime`, `clawchef_runnerUrl`
 
 ## Security Model
 
-- **Sandboxing:** All code runs inside a WebContainer (WASM-based). No access to host filesystem or network beyond browser APIs.
+- **Sandboxing:** Browser sessions run inside a WebContainer (WASM-based). External-local sessions run in a localhost daemon backed by rootless Podman.
 - **Policy enforcement:** Every file read/write, process spawn, and port bind is checked against the policy engine before execution.
 - **Network auditing:** All HTTP requests (browser and container) are intercepted, logged, and sensitive headers masked.
 - **API key masking:** Keys are masked in logs (first 7 + last 4 chars visible).
 - **COOP/COEP headers:** Required for SharedArrayBuffer (WebContainer). Configured via Vite dev server.
+
