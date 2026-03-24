@@ -84,6 +84,7 @@ export class ExternalRunnerClient implements ExecutionBackend {
   async boot(opts?: ContainerBootOptions): Promise<void> {
     this.lastBootOptions = opts ?? null;
     this.setStatus('booting');
+    await this.ensureRunnerAvailable();
 
     const image = opts?.image ?? 'node:20-bookworm-slim';
     const baseWorkspace = flattenWorkspaceTree(buildWorkspaceFiles(opts?.workspace));
@@ -549,14 +550,18 @@ export class ExternalRunnerClient implements ExecutionBackend {
 
   private async request(path: string, init: Omit<RequestInit, 'body'> & { body?: unknown } = {}): Promise<Response> {
     const body = normalizeRequestBody(init.body);
-    return fetch(normalizePath(this.baseUrl, path), {
-      ...init,
-      body,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(init.headers ?? {}),
-      },
-    });
+    try {
+      return await fetch(normalizePath(this.baseUrl, path), {
+        ...init,
+        body,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init.headers ?? {}),
+        },
+      });
+    } catch (error) {
+      throw this.runnerUnavailableError(error);
+    }
   }
 
   private async requestJson<T>(path: string, init: Omit<RequestInit, 'body'> & { body?: unknown } = {}): Promise<T> {
@@ -567,6 +572,28 @@ export class ExternalRunnerClient implements ExecutionBackend {
     }
     if (resp.status === 204) return undefined as T;
     return resp.json() as Promise<T>;
+  }
+
+  private async ensureRunnerAvailable(): Promise<void> {
+    try {
+      const resp = await fetch(`${this.baseUrl}/health`);
+      if (!resp.ok) {
+        throw new Error(`health check returned ${resp.status} ${resp.statusText}`.trim());
+      }
+      const health = await resp.json() as { ok?: boolean; podman?: boolean };
+      if (health.podman === false) {
+        throw new Error('Podman is not available on this machine');
+      }
+    } catch (error) {
+      throw this.runnerUnavailableError(error);
+    }
+  }
+
+  private runnerUnavailableError(error: unknown): Error {
+    const detail = error instanceof Error ? error.message : String(error);
+    return new Error(
+      `External runner daemon unavailable at ${this.baseUrl}. Start it with \`npm run locald\` or \`npm run dev:all\`. ${detail}`.trim(),
+    );
   }
 }
 

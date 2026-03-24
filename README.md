@@ -54,16 +54,16 @@ Run, observe, and control AI agents in the browser or against a local sandbox ru
 
 ClawLess runs a full Node.js runtime in the browser via WebContainers — that means access to **3.4 million+ npm packages**. In this example, the agent installs `pptxgenjs`, generates a polished PowerPoint file with charts, images, and styled layouts, and saves it to the virtual filesystem — all without a server. The agent even learns and crystallizes reusable skills for future tasks.
 
-For local execution, start the daemon first:
+For local execution, use the combined launcher:
 
 ```bash
-npm run locald
+npm run dev:all
 ```
 
 Then open the UI with the external runtime selected:
 
 ```text
-http://localhost:5173/?runtime=external-local&runner=http://127.0.0.1:6234
+http://localhost:5173/?runtime=external-local
 ```
 
 <p align="center">
@@ -113,12 +113,13 @@ Control agent behavior with a built-in policy system. Define file access rules, 
 git clone https://github.com/open-gitagent/clawless.git
 cd clawless
 npm install
-npm run dev
+npm run dev:all
 ```
 
 ```bash
-# Optional local sandbox runner
+# Optional separate processes if you prefer manual control
 npm run locald
+npm run dev
 ```
 
 ```bash
