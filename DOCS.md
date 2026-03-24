@@ -352,7 +352,10 @@ Configure through the UI config panel or programmatically via options.env:
 - `OPENAI_API_KEY` - OpenAI API key
 - `OPENROUTER_API_KEY` - OpenRouter API key
 - `ZAI_API_KEY` - Z.ai API key
+- `MINIMAX_API_KEY` - MiniMax coding-plan API key
 - `OPENAI_SESSION_TOKEN` - OpenAI login/session token
+- `OPENAI_BASE_URL` - OpenAI-compatible base URL override
+- `ANTHROPIC_BASE_URL` - Anthropic-compatible base URL override
 - `GOOGLE_API_KEY` - Google AI API key
 - `GITHUB_TOKEN` - GitHub personal access token (for git operations)
 

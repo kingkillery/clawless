@@ -152,7 +152,10 @@ ClawLess is configured through environment variables passed to the `ClawContaine
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OPENROUTER_API_KEY` | OpenRouter API key |
 | `ZAI_API_KEY` | Z.ai API key |
+| `MINIMAX_API_KEY` | MiniMax coding-plan API key |
 | `OPENAI_SESSION_TOKEN` | OpenAI web-login/session token |
+| `OPENAI_BASE_URL` | OpenAI-compatible base URL override |
+| `ANTHROPIC_BASE_URL` | Anthropic-compatible base URL override |
 | `GOOGLE_API_KEY` | Google AI / Gemini API key |
 | `CLAWLESS_MODEL` | Model selection (e.g. `claude-sonnet-4-20250514`, `gpt-4o`) |
 
@@ -171,6 +174,7 @@ Launch URLs can also preload tool presets, for example `?template=openclaw&tools
 | **Google** | Gemini Pro, Gemini Flash |
 | **OpenRouter** | Any OpenRouter-routed model |
 | **Z.ai** | GLM-family models |
+| **MiniMax** | Coding-plan Anthropic-compatible models |
 | **OpenAI Login** | OpenAI-authenticated models via session token |
 
 ## Roadmap

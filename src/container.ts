@@ -271,8 +271,8 @@ export class ContainerManager {
     if (!this.wc) throw new Error('Container not booted');
     this.enforcePolicy('file.write', 'workspace/.env');
 
-    // Use all user-supplied env vars directly
-    this.apiEnvVars = { ...env.envVars };
+    // Normalize provider-specific aliases into the env names the agent runtime expects.
+    this.apiEnvVars = normalizeProviderEnv(env.provider, env.envVars);
 
     // If we have an OpenAI key, fetch an ephemeral realtime token from the
     // browser side (WebContainer's fetch drops Authorization headers)
@@ -747,4 +747,37 @@ async function recursiveList(
   }
 
   return results;
+}
+
+function normalizeProviderEnv(provider: string, envVars: Record<string, string>): Record<string, string> {
+  const normalized = { ...envVars };
+
+  if (provider === 'openrouter') {
+    if (normalized['OPENROUTER_API_KEY'] && !normalized['OPENAI_API_KEY']) {
+      normalized['OPENAI_API_KEY'] = normalized['OPENROUTER_API_KEY'];
+    }
+    if (!normalized['OPENAI_BASE_URL']) {
+      normalized['OPENAI_BASE_URL'] = 'https://openrouter.ai/api/v1';
+    }
+  }
+
+  if (provider === 'zai') {
+    if (normalized['ZAI_API_KEY'] && !normalized['OPENAI_API_KEY']) {
+      normalized['OPENAI_API_KEY'] = normalized['ZAI_API_KEY'];
+    }
+    if (!normalized['OPENAI_BASE_URL']) {
+      normalized['OPENAI_BASE_URL'] = 'https://api.z.ai/api/coding/paas/v4';
+    }
+  }
+
+  if (provider === 'minimax') {
+    if (normalized['MINIMAX_API_KEY'] && !normalized['ANTHROPIC_API_KEY']) {
+      normalized['ANTHROPIC_API_KEY'] = normalized['MINIMAX_API_KEY'];
+    }
+    if (!normalized['ANTHROPIC_BASE_URL']) {
+      normalized['ANTHROPIC_BASE_URL'] = 'https://api.minimax.io/anthropic';
+    }
+  }
+
+  return normalized;
 }

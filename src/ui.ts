@@ -7,6 +7,7 @@ import type { TabDefinition } from './types.js';
 // ─── Provider → env var key ──────────────────────────────────────────────────
 interface ProviderDefinition {
   envKey: string;
+  defaultEnv: Record<string, string>;
   modelSuggestions: string[];
 }
 
@@ -14,26 +15,46 @@ interface ProviderDefinition {
 const PROVIDERS: Record<string, ProviderDefinition> = {
   anthropic: {
     envKey: 'ANTHROPIC_API_KEY',
+    defaultEnv: { ANTHROPIC_API_KEY: '' },
     modelSuggestions: ['anthropic:claude-opus-4-1', 'anthropic:claude-sonnet-4', 'anthropic:claude-haiku-3-5'],
   },
   openai: {
     envKey: 'OPENAI_API_KEY',
+    defaultEnv: { OPENAI_API_KEY: '' },
     modelSuggestions: ['openai:gpt-4o', 'openai:gpt-4.1-mini', 'openai:o3-mini'],
   },
   google: {
     envKey: 'GOOGLE_API_KEY',
+    defaultEnv: { GOOGLE_API_KEY: '' },
     modelSuggestions: ['google:gemini-2.0-flash', 'google:gemini-2.5-pro'],
   },
   openrouter: {
     envKey: 'OPENROUTER_API_KEY',
+    defaultEnv: {
+      OPENROUTER_API_KEY: '',
+      OPENAI_BASE_URL: 'https://openrouter.ai/api/v1',
+    },
     modelSuggestions: ['openrouter:auto', 'openrouter:anthropic/claude-3.7-sonnet', 'openrouter:openai/gpt-4o-mini'],
   },
   zai: {
     envKey: 'ZAI_API_KEY',
-    modelSuggestions: ['zai:glm-4.5', 'zai:glm-4.5-air'],
+    defaultEnv: {
+      ZAI_API_KEY: '',
+      OPENAI_BASE_URL: 'https://api.z.ai/api/coding/paas/v4',
+    },
+    modelSuggestions: ['zai:GLM-5', 'zai:GLM-4.7', 'zai:GLM-4.5-Air'],
+  },
+  minimax: {
+    envKey: 'MINIMAX_API_KEY',
+    defaultEnv: {
+      MINIMAX_API_KEY: '',
+      ANTHROPIC_BASE_URL: 'https://api.minimax.io/anthropic',
+    },
+    modelSuggestions: ['minimax:MiniMax-M2.5', 'minimax:MiniMax-M2.5-highspeed', 'minimax:MiniMax-M2.1'],
   },
   'openai-login': {
     envKey: 'OPENAI_SESSION_TOKEN',
+    defaultEnv: { OPENAI_SESSION_TOKEN: '' },
     modelSuggestions: ['openai:gpt-4o', 'openai:gpt-4.1', 'openai:o3'],
   },
 };
@@ -41,6 +62,10 @@ const PROVIDERS: Record<string, ProviderDefinition> = {
 function providerEnvKey(provider: string): string {
   return PROVIDERS[provider]?.envKey ?? PROVIDERS.anthropic.envKey;
 }
+
+const PROVIDER_BOOTSTRAP_KEYS = new Set(
+  Object.values(PROVIDERS).flatMap((provider) => Object.keys(provider.defaultEnv)),
+);
 
 const LS_PREFIX = 'clawchef_';
 const PREVIEW_TAB_PATH = '__preview__';
@@ -1070,11 +1095,22 @@ export class UIManager {
 
   /** Ensure the first env row key matches the selected provider. */
   private syncDefaultEnvKey(): void {
-    const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
-    const keyName = providerEnvKey(provider);
     const rows = document.getElementById('env-rows')!;
-    const firstKey = rows.querySelector('.env-key') as HTMLInputElement | null;
-    if (firstKey) firstKey.value = keyName;
+    const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
+    const defaults = PROVIDERS[provider]?.defaultEnv ?? { [providerEnvKey(provider)]: '' };
+    const existing = this.getEnvRows();
+
+    rows.innerHTML = '';
+
+    for (const [key, value] of Object.entries(defaults)) {
+      this.addEnvRow(key, existing[key] ?? value);
+    }
+
+    for (const [key, value] of Object.entries(existing)) {
+      if (!PROVIDER_BOOTSTRAP_KEYS.has(key)) {
+        this.addEnvRow(key, value);
+      }
+    }
   }
 
   private addEnvRow(key: string, value: string): HTMLDivElement {
@@ -1147,9 +1183,11 @@ export class UIManager {
     }
 
     if (Object.keys(envVars).length === 0) {
-      // Add a default empty row for the selected provider
       const prov = provider ?? 'anthropic';
-      this.addEnvRow(providerEnvKey(prov), '');
+      const defaults = PROVIDERS[prov]?.defaultEnv ?? { [providerEnvKey(prov)]: '' };
+      for (const [key, value] of Object.entries(defaults)) {
+        this.addEnvRow(key, value);
+      }
     } else {
       for (const [k, v] of Object.entries(envVars)) {
         this.addEnvRow(k, v);
