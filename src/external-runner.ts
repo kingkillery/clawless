@@ -580,9 +580,9 @@ export class ExternalRunnerClient implements ExecutionBackend {
       if (!resp.ok) {
         throw new Error(`health check returned ${resp.status} ${resp.statusText}`.trim());
       }
-      const health = await resp.json() as { ok?: boolean; podman?: boolean };
-      if (health.podman === false) {
-        throw new Error('Podman is not available on this machine');
+      const health = await resp.json() as { ok?: boolean; engine?: string | null; podman?: boolean; docker?: boolean };
+      if (!health.engine) {
+        throw new Error('No container engine is available on this machine');
       }
     } catch (error) {
       throw this.runnerUnavailableError(error);

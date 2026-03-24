@@ -12,6 +12,7 @@ const HOST = process.env.CLAWLESS_LOCALD_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.CLAWLESS_LOCALD_PORT ?? '6234');
 const HOME_DIR = '/home/clawless';
 const ROOT = resolve(tmpdir(), 'clawless-locald');
+const CONTAINER_ENGINE = await detectContainerEngine();
 
 /** @type {Map<string, Session>} */
 const sessions = new Map();
@@ -115,8 +116,12 @@ server.listen(PORT, HOST, () => {
 /** @typedef {{ id: string, kind: 'exec'|'process', command: string, child: ReturnType<typeof spawn>, request: { command: string, args: string[], cwd: string, env: Record<string, string> }, persistent: boolean }} SessionProcess */
 
 async function handleHealth(res) {
-  const available = await canRunPodman();
-  await sendJson(res, { ok: true, podman: available });
+  await sendJson(res, {
+    ok: true,
+    engine: CONTAINER_ENGINE,
+    podman: CONTAINER_ENGINE === 'podman',
+    docker: CONTAINER_ENGINE === 'docker',
+  });
 }
 
 async function handleCreateSession(req, res) {
@@ -277,7 +282,7 @@ async function destroySession(session) {
   }
   session.processes.clear();
   if (session.containerId) {
-    await runPodman(['rm', '-f', session.containerId]).catch(() => {});
+    await runContainerEngine(['rm', '-f', session.containerId]).catch(() => {});
   }
   if (session.watcher) session.watcher.close();
   if (session.pollTimer) clearInterval(session.pollTimer);
@@ -302,7 +307,7 @@ async function startContainer(session) {
     'sleep',
     'infinity',
   ];
-  const result = await runPodman(args);
+  const result = await runContainerEngine(args);
   session.containerId = result.stdout.trim();
 }
 
@@ -347,7 +352,7 @@ async function runCommand(session, request, options) {
   args.push(session.containerId);
   args.push(request.command, ...(request.args ?? []));
 
-  const child = spawn('podman', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+  const child = spawn(CONTAINER_ENGINE ?? 'podman', args, { stdio: ['pipe', 'pipe', 'pipe'] });
   const stdout = [];
   const stderr = [];
   let sawTrailingNewline = false;
@@ -397,13 +402,16 @@ async function runCommand(session, request, options) {
   return { exitCode, stdout: stdout.join('') + stderr.join('') };
 }
 
-async function canRunPodman() {
-  try {
-    await runPodman(['--version']);
-    return true;
-  } catch {
-    return false;
+async function detectContainerEngine() {
+  for (const engine of ['podman', 'docker']) {
+    try {
+      await runEngine(engine, ['--version']);
+      return engine;
+    } catch {
+      // try next engine
+    }
   }
+  return null;
 }
 
 function broadcast(session, type, data) {
@@ -513,8 +521,15 @@ async function sendJson(res, value, status = 200) {
   res.end(JSON.stringify(value));
 }
 
-async function runPodman(args) {
-  const child = spawn('podman', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+async function runContainerEngine(args) {
+  if (!CONTAINER_ENGINE) {
+    throw new Error('No container engine available');
+  }
+  return runEngine(CONTAINER_ENGINE, args);
+}
+
+async function runEngine(engine, args) {
+  const child = spawn(engine, args, { stdio: ['ignore', 'pipe', 'pipe'] });
   let stdout = '';
   let stderr = '';
   child.stdout.on('data', (chunk) => { stdout += chunk.toString('utf8'); });
@@ -524,7 +539,7 @@ async function runPodman(args) {
     child.on('exit', (exitCode) => resolve(exitCode ?? 0));
   });
   if (code !== 0) {
-    throw new Error(`podman ${args.join(' ')} failed (${code}): ${stderr.trim() || stdout.trim()}`);
+    throw new Error(`${engine} ${args.join(' ')} failed (${code}): ${stderr.trim() || stdout.trim()}`);
   }
   return { code, stdout, stderr };
 }
