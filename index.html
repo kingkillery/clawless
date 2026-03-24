@@ -149,10 +149,14 @@
               <option value="anthropic">Anthropic</option>
               <option value="openai">OpenAI</option>
               <option value="google">Google (Gemini)</option>
+              <option value="openrouter">OpenRouter</option>
+              <option value="zai">Z.ai</option>
+              <option value="openai-login">OpenAI Login</option>
             </select>
 
             <label for="model-select">Model</label>
-            <select id="model-select"></select>
+            <input id="model-select" list="model-options" placeholder="provider:model-name" />
+            <datalist id="model-options"></datalist>
 
             <div class="env-section">
               <label>Environment Variables</label>

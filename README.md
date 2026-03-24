@@ -115,6 +115,7 @@ import { ClawContainer } from 'clawcontainer';
 
 const cc = new ClawContainer('#app', {
   template: 'gitclaw',
+  toolPresets: ['pptx', 'spreadsheet'],
   env: { ANTHROPIC_API_KEY: 'sk-...' }
 });
 
@@ -149,10 +150,15 @@ ClawLess is configured through environment variables passed to the `ClawContaine
 |---|---|
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `OPENAI_API_KEY` | OpenAI API key |
-| `GOOGLE_AI_API_KEY` | Google AI API key |
+| `OPENROUTER_API_KEY` | OpenRouter API key |
+| `ZAI_API_KEY` | Z.ai API key |
+| `OPENAI_SESSION_TOKEN` | OpenAI web-login/session token |
+| `GOOGLE_API_KEY` | Google AI / Gemini API key |
 | `CLAWLESS_MODEL` | Model selection (e.g. `claude-sonnet-4-20250514`, `gpt-4o`) |
 
 All runtime state is persisted to `localStorage` under the `clawchef_` prefix, so sessions survive page reloads.
+
+Launch URLs can also preload tool presets, for example `?template=openclaw&tools=pptx,spreadsheet`.
 
 ## Links
 
@@ -163,6 +169,9 @@ All runtime state is persisted to `localStorage` under the `clawchef_` prefix, s
 | **Anthropic** | Claude Sonnet, Claude Opus, Claude Haiku |
 | **OpenAI** | GPT-4o, GPT-4, GPT-3.5 |
 | **Google** | Gemini Pro, Gemini Flash |
+| **OpenRouter** | Any OpenRouter-routed model |
+| **Z.ai** | GLM-family models |
+| **OpenAI Login** | OpenAI-authenticated models via session token |
 
 ## Roadmap
 

@@ -5,20 +5,42 @@ import { PolicyEngine } from './policy.js';
 import type { TabDefinition } from './types.js';
 
 // ─── Provider → env var key ──────────────────────────────────────────────────
-function providerEnvKey(provider: string): string {
-  switch (provider) {
-    case 'openai':  return 'OPENAI_API_KEY';
-    case 'google':  return 'GOOGLE_API_KEY';
-    default:        return 'ANTHROPIC_API_KEY';
-  }
+interface ProviderDefinition {
+  envKey: string;
+  modelSuggestions: string[];
 }
 
 // ─── Provider → models ───────────────────────────────────────────────────────
-const PROVIDER_MODELS: Record<string, string[]> = {
-  anthropic: ['anthropic:claude-opus-4-6', 'anthropic:claude-sonnet-4-6', 'anthropic:claude-haiku-4-5'],
-  openai:    ['openai:gpt-4o', 'openai:gpt-4o-mini', 'openai:o3-mini'],
-  google:    ['google:gemini-2.0-flash', 'google:gemini-2.5-pro'],
+const PROVIDERS: Record<string, ProviderDefinition> = {
+  anthropic: {
+    envKey: 'ANTHROPIC_API_KEY',
+    modelSuggestions: ['anthropic:claude-opus-4-1', 'anthropic:claude-sonnet-4', 'anthropic:claude-haiku-3-5'],
+  },
+  openai: {
+    envKey: 'OPENAI_API_KEY',
+    modelSuggestions: ['openai:gpt-4o', 'openai:gpt-4.1-mini', 'openai:o3-mini'],
+  },
+  google: {
+    envKey: 'GOOGLE_API_KEY',
+    modelSuggestions: ['google:gemini-2.0-flash', 'google:gemini-2.5-pro'],
+  },
+  openrouter: {
+    envKey: 'OPENROUTER_API_KEY',
+    modelSuggestions: ['openrouter:auto', 'openrouter:anthropic/claude-3.7-sonnet', 'openrouter:openai/gpt-4o-mini'],
+  },
+  zai: {
+    envKey: 'ZAI_API_KEY',
+    modelSuggestions: ['zai:glm-4.5', 'zai:glm-4.5-air'],
+  },
+  'openai-login': {
+    envKey: 'OPENAI_SESSION_TOKEN',
+    modelSuggestions: ['openai:gpt-4o', 'openai:gpt-4.1', 'openai:o3'],
+  },
 };
+
+function providerEnvKey(provider: string): string {
+  return PROVIDERS[provider]?.envKey ?? PROVIDERS.anthropic.envKey;
+}
 
 const LS_PREFIX = 'clawchef_';
 const PREVIEW_TAB_PATH = '__preview__';
@@ -341,7 +363,7 @@ export class UIManager {
     overlay.querySelector('#btn-binary-download')!.addEventListener('click', async () => {
       try {
         const buffer = await this.container.readFileBuffer(fullPath);
-        const blob = new Blob([buffer]);
+        const blob = new Blob([buffer as unknown as ArrayBuffer]);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1030,12 +1052,19 @@ export class UIManager {
 
   private populateModelOptions(): void {
     const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
-    const modelSel = document.getElementById('model-select') as HTMLSelectElement;
-    modelSel.innerHTML = '';
-    for (const m of PROVIDER_MODELS[provider] ?? []) {
+    const modelSel = document.getElementById('model-select') as HTMLInputElement;
+    const modelOptions = document.getElementById('model-options') as HTMLDataListElement;
+    const suggestions = PROVIDERS[provider]?.modelSuggestions ?? [];
+
+    modelOptions.innerHTML = '';
+    for (const m of suggestions) {
       const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m.split(':')[1];
-      modelSel.appendChild(opt);
+      opt.value = m;
+      modelOptions.appendChild(opt);
+    }
+
+    if (!modelSel.value || modelSel.value.startsWith(`${provider}:`) === false) {
+      modelSel.value = suggestions[0] ?? `${provider}:`;
     }
   }
 
@@ -1099,7 +1128,7 @@ export class UIManager {
       this.populateModelOptions();
     }
     if (model) setTimeout(() => {
-      (document.getElementById('model-select') as HTMLSelectElement).value = model;
+      (document.getElementById('model-select') as HTMLInputElement).value = model;
     }, 0);
 
     // Restore env var rows
@@ -1130,9 +1159,14 @@ export class UIManager {
 
   private async saveConfig(): Promise<void> {
     const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
-    const model    = (document.getElementById('model-select') as HTMLSelectElement).value;
+    const model    = (document.getElementById('model-select') as HTMLInputElement).value.trim();
     const envVars  = this.getEnvRows();
     const msg      = document.getElementById('config-message')!;
+
+    if (!model) {
+      showMsg(msg, 'A model string is required.', 'error');
+      return;
+    }
 
     if (Object.keys(envVars).length === 0) {
       showMsg(msg, 'At least one environment variable is required.', 'error');

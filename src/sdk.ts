@@ -10,6 +10,12 @@ import { installBrowserFetchInterceptor } from './net-intercept.js';
 import { TypedEventEmitter } from './event-emitter.js';
 import { PluginManager } from './plugin.js';
 import { TabManager } from './tab-manager.js';
+import {
+  ToolPresetRegistry,
+  buildToolPresetWorkspace,
+  mergeToolPresetContributions,
+  resolveToolPresets,
+} from './tool-presets.js';
 import type {
   AgentConfig,
   ClawContainerOptions,
@@ -17,6 +23,7 @@ import type {
   ClawContainerEvents,
   ClawContainerSDK,
   TabDefinition,
+  ToolPresetDefinition,
 } from './types.js';
 import {
   type ContainerTemplate,
@@ -31,15 +38,26 @@ import JSZip from 'jszip';
 export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implements ClawContainerSDK {
   // ─── Static template API ─────────────────────────────────────────────────
   private static _templateRegistry = new TemplateRegistry();
+  private static _toolPresetRegistry = new ToolPresetRegistry();
 
   /** Registered templates (read-only). */
   static get templates(): Map<string, ContainerTemplate> {
     return ClawContainer._templateRegistry.all;
   }
 
+  /** Registered tool presets (read-only). */
+  static get toolPresets(): Map<string, ToolPresetDefinition> {
+    return ClawContainer._toolPresetRegistry.all;
+  }
+
   /** Register a named template for reuse. */
   static registerTemplate(template: ContainerTemplate): void {
     ClawContainer._templateRegistry.register(template);
+  }
+
+  /** Register a launch-time tool preset. */
+  static registerToolPreset(preset: ToolPresetDefinition): void {
+    ClawContainer._toolPresetRegistry.register(preset);
   }
 
   /** Parse a YAML string into a ContainerTemplate. */
@@ -120,6 +138,9 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
     // ─── Resolve template and merge with options ───────────────────────────
     const template = resolveTemplate(this._options.template, ClawContainer._templateRegistry);
     const opts = mergeTemplateWithOptions(template, this._options);
+    const toolPresets = resolveToolPresets(opts.toolPresets, ClawContainer._toolPresetRegistry);
+    const toolPresetConfig = mergeToolPresetContributions(toolPresets);
+    const toolPresetWorkspace = buildToolPresetWorkspace(toolPresets);
 
     // Dispatch plugin onInit
     this._plugins.dispatchInit(this);
@@ -149,9 +170,17 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
     this._ui.openPreviewOnLoad();
 
     // Merge plugin contributions with merged options
-    const extraServices = { ...this._plugins.mergedServices, ...opts.services };
-    const extraWorkspace = { ...this._plugins.mergedWorkspace, ...opts.workspace };
-    const extraEnv = { ...this._plugins.mergedEnv, ...opts.env };
+    const extraServices = { ...this._plugins.mergedServices, ...toolPresetConfig.services, ...opts.services };
+    const extraWorkspace = {
+      ...this._plugins.mergedWorkspace,
+      ...toolPresetConfig.workspace,
+      ...toolPresetWorkspace,
+      ...opts.workspace,
+    };
+    const extraEnv = { ...this._plugins.mergedEnv, ...toolPresetConfig.env, ...opts.env };
+    const startupScript = [toolPresetConfig.startupScript, opts.startupScript]
+      .filter((script): script is string => Boolean(script))
+      .join('\n');
 
     // Extract agent config for boot (package.json generation)
     const resolvedAgent = opts.agent !== false ? opts.agent as AgentConfig | undefined : undefined;
@@ -189,10 +218,10 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
     this._terminal.write('\r\n\x1b[32m[ClawLess] Installation complete.\x1b[0m\r\n\r\n');
 
     // Step 3: Run startup script if provided
-    if (opts.startupScript) {
+    if (startupScript) {
       this._terminal.write('\x1b[90m[ClawLess] Running startup script…\x1b[0m\r\n');
       try {
-        await this._container.runStartupScript(opts.startupScript, this._terminal);
+        await this._container.runStartupScript(startupScript, this._terminal);
       } catch (e) {
         this._terminal.write(`\r\n\x1b[31m[ClawLess] Startup script failed:\x1b[0m\r\n${(e as Error).message}\r\n`);
         this.emit('error', e as Error);

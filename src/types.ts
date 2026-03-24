@@ -4,6 +4,25 @@ import type { WebContainer } from '@webcontainer/api';
 import type { AuditEntry, AuditSource, AuditLevel, AuditEvent } from './audit.js';
 import type { ContainerTemplate } from './templates.js';
 
+/** A reusable launch preset that pre-installs tool packages and prompt docs. */
+export interface ToolPresetDefinition {
+  /** Stable preset id, used in URLs and registries. */
+  name: string;
+  /** Human-friendly description for docs/UIs. */
+  description?: string;
+  /** npm dependencies to install inside the container. */
+  services?: Record<string, string>;
+  /** Workspace files to inject alongside the preset. */
+  workspace?: Record<string, string>;
+  /** Environment variables to inject before launch. */
+  env?: Record<string, string>;
+  /** Optional shell snippet to run before the agent launches. */
+  startupScript?: string;
+}
+
+/** A tool preset can be referenced by name or provided inline. */
+export type ToolPresetInput = string | ToolPresetDefinition;
+
 /** Configuration for launching an agent inside the container. */
 export interface AgentConfig {
   /** npm package name (e.g. 'gitclaw') */
@@ -34,6 +53,8 @@ export interface ClawContainerOptions {
   startupScript?: string;
   /** Template to use: name of a registered template, or a ContainerTemplate object. Default: 'gitclaw'. */
   template?: string | ContainerTemplate;
+  /** Named or inline tool presets to install before launch. */
+  toolPresets?: ToolPresetInput[];
   /** Plugins to register before start */
   plugins?: ClawContainerPlugin[];
   /** Custom tabs to add on start */

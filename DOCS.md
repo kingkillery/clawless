@@ -61,6 +61,7 @@ interface ClawContainerOptions {
   env?: Record<string, string>;
   startupScript?: string;
   template?: string | ContainerTemplate;
+  toolPresets?: Array<string | ToolPresetDefinition>;
   plugins?: ClawContainerPlugin[];
   tabs?: TabDefinition[];
 }
@@ -161,6 +162,7 @@ interface ContainerTemplate {
   services?: Record<string, string>;
   env?: Record<string, string>;
   startupScript?: string;
+  toolPresets?: Array<string | ToolPresetDefinition>;
   tabs?: TabDefinition[];
 }
 ```
@@ -188,6 +190,8 @@ startupScript: npm run build
 ```
 
 Register via `ClawContainer.registerTemplate(template)` or pass template name/object in options.
+
+Tool presets let you pre-install common pure-JS tool packages and prompt docs at launch time. Built-ins currently include `pptx`, `spreadsheet`, `pdf`, and `charts`. You can also pass them through launch URLs such as `?template=openclaw&tools=pptx,spreadsheet`.
 
 ## Policy Engine
 
@@ -346,6 +350,9 @@ Configure through the UI config panel or programmatically via options.env:
 
 - `ANTHROPIC_API_KEY` - Anthropic API key
 - `OPENAI_API_KEY` - OpenAI API key
+- `OPENROUTER_API_KEY` - OpenRouter API key
+- `ZAI_API_KEY` - Z.ai API key
+- `OPENAI_SESSION_TOKEN` - OpenAI login/session token
 - `GOOGLE_API_KEY` - Google AI API key
 - `GITHUB_TOKEN` - GitHub personal access token (for git operations)
 

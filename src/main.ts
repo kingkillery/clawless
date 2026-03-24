@@ -24,7 +24,12 @@ function waitForTemplateSelection(): Promise<string> {
 }
 
 async function boot() {
-  const template = await waitForTemplateSelection();
+  const params = new URLSearchParams(window.location.search);
+  const template = params.get('template') ?? await waitForTemplateSelection();
+  const toolPresets = params.get('tools')
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   // Hide picker, show loading status
   const picker = document.getElementById('template-picker');
@@ -34,7 +39,7 @@ async function boot() {
   if (status) status.style.display = '';
   if (progressBar) progressBar.style.display = '';
 
-  const cc = new ClawContainer('#app', { template });
+  const cc = new ClawContainer('#app', { template, toolPresets });
   cc.start().catch(console.error);
 
   // Expose SDK globally for console access and external scripts

@@ -1,6 +1,6 @@
 // ─── Template System for ClawContainer ──────────────────────────────────────
 
-import type { AgentConfig, ClawContainerOptions, TabDefinition } from './types.js';
+import type { AgentConfig, ClawContainerOptions, TabDefinition, ToolPresetInput } from './types.js';
 
 /** A named, reusable container configuration preset. */
 export interface ContainerTemplate {
@@ -11,6 +11,7 @@ export interface ContainerTemplate {
   services?: Record<string, string>;
   env?: Record<string, string>;
   startupScript?: string;
+  toolPresets?: ToolPresetInput[];
   tabs?: TabDefinition[];
 }
 
@@ -60,7 +61,6 @@ export const OPENCLAW_TEMPLATE: ContainerTemplate = {
   workspace: {
     'IDENTITY.md': '# Identity\n\nYou are a helpful AI assistant running inside ClawLess.\n',
     'USER.md': '# User\n\nDefault user.\n',
-    'TOOLS.md': '# Tools\n\nNo custom tools configured.\n',
   },
 };
 
@@ -146,6 +146,11 @@ export function mergeTemplateWithOptions(
   // Scalar: options win
   merged.startupScript = options.startupScript ?? template.startupScript;
 
+  // Tool presets: template first, options appended
+  if ((template.toolPresets?.length ?? 0) > 0 || (options.toolPresets?.length ?? 0) > 0) {
+    merged.toolPresets = [...(template.toolPresets ?? []), ...(options.toolPresets ?? [])];
+  }
+
   // Tabs: concat template tabs + options tabs (dedup by id, options win)
   const templateTabs = template.tabs ?? [];
   const optionTabs = options.tabs ?? [];
@@ -170,6 +175,7 @@ export function mergeTemplateWithOptions(
  * - Top-level scalar keys (name, description, startupScript)
  * - Top-level `agent:` with nested scalar keys + args/env
  * - Top-level Record sections (workspace, services, env)
+ * - Top-level `toolPresets: [pptx, spreadsheet]`
  * - `agent: false` to skip agent launch
  */
 export function parseTemplateYaml(yaml: string): ContainerTemplate {
@@ -200,6 +206,25 @@ export function parseTemplateYaml(yaml: string): ContainerTemplate {
     } else if (key === 'startupScript') {
       template.startupScript = stripQuotes(value);
       i++;
+    } else if (key === 'toolPresets') {
+      if (value.startsWith('[')) {
+        template.toolPresets = parseYamlInlineArray(value);
+        i++;
+      } else {
+        const presets: string[] = [];
+        i++;
+        while (i < lines.length) {
+          const pLine = lines[i];
+          const pTrimmed = pLine.trim();
+          if (pTrimmed === '' || pTrimmed.startsWith('#')) { i++; continue; }
+          if (/^\S/.test(pLine)) break;
+          const itemMatch = pTrimmed.match(/^-\s*(.+)$/);
+          if (!itemMatch) break;
+          presets.push(stripQuotes(itemMatch[1].trim()));
+          i++;
+        }
+        template.toolPresets = presets;
+      }
     } else if (key === 'agent') {
       if (value === 'false') {
         template.agent = false;
