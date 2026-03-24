@@ -57,7 +57,7 @@ ClawLess runs a full Node.js runtime in the browser via WebContainers — that m
 For local execution, use the combined launcher:
 
 ```bash
-npm run dev:all
+npm run dev
 ```
 
 Then open the UI with the external runtime selected:
@@ -113,13 +113,13 @@ Control agent behavior with a built-in policy system. Define file access rules, 
 git clone https://github.com/open-gitagent/clawless.git
 cd clawless
 npm install
-npm run dev:all
+npm run dev
 ```
 
 ```bash
 # Optional separate processes if you prefer manual control
 npm run locald
-npm run dev
+npm run dev:web
 ```
 
 ```bash

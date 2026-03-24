@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev-all.mjs",
+    "dev:web": "vite",
     "dev:all": "node scripts/dev-all.mjs",
     "locald": "node runner/locald.mjs",
     "build": "vite build && tsc",
