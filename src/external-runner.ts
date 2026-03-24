@@ -131,7 +131,17 @@ export class ExternalRunnerClient implements ExecutionBackend {
       command: 'npm',
       args: ['install', '--legacy-peer-deps', '--ignore-scripts', '--cache', '/tmp/npm-cache'],
       cwd: '/home/clawless',
-      env: { HOME: '/home/clawless', PATH: '/home/clawless/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' },
+      env: {
+        HOME: '/home/clawless',
+        CI: '1',
+        npm_config_yes: 'true',
+        npm_config_fund: 'false',
+        npm_config_audit: 'false',
+        npm_config_update_notifier: 'false',
+        npm_config_progress: 'false',
+        npm_config_loglevel: 'error',
+        PATH: '/home/clawless/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      },
       kind: 'install',
     });
     if (result.exitCode !== 0) {
