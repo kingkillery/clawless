@@ -42,6 +42,8 @@ async function boot() {
   const runnerUrl = params.get('runner')
     ?? localStorage.getItem('clawchef_runnerUrl')
     ?? 'http://127.0.0.1:6234';
+  const runnerNetworkMode = localStorage.getItem('clawchef_runnerNetworkMode')
+    ?? 'default';
 
   if (runtime) {
     localStorage.setItem('clawchef_runtime', runtime);
@@ -61,6 +63,7 @@ async function boot() {
     toolPresets,
     runtime: runtime as 'webcontainer' | 'external-local' | undefined,
     runnerUrl,
+    runnerNetworkMode: runnerNetworkMode as 'default' | 'none',
   });
   cc.start().catch(console.error);
 

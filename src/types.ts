@@ -6,6 +6,7 @@ import type { ContainerTemplate } from './templates.js';
 
 export type RuntimeKind = 'webcontainer' | 'external-local';
 export type AgentKind = 'node-package' | 'workspace-command' | 'external-command';
+export type RunnerNetworkMode = 'default' | 'none';
 
 export type ContainerStatus = 'booting' | 'installing' | 'ready' | 'error';
 
@@ -76,6 +77,8 @@ export interface ClawContainerOptions {
   runtime?: RuntimeKind;
   /** Local runner daemon base URL for external-local runtime. */
   runnerUrl?: string;
+  /** Network policy for external-local sessions. Default: default. */
+  runnerNetworkMode?: RunnerNetworkMode;
   /** Named or inline tool presets to install before launch. */
   toolPresets?: ToolPresetInput[];
   /** Plugins to register before start */

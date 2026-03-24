@@ -86,7 +86,7 @@ export class ClawContainer extends TypedEventEmitter<ClawContainerEvents> implem
 
     this._terminal = new TerminalManager();
     this._container = (this._options.runtime ?? 'webcontainer') === 'external-local'
-      ? new ExternalRunnerClient(this._options.runnerUrl)
+      ? new ExternalRunnerClient(this._options.runnerUrl, this._options.runnerNetworkMode)
       : new ContainerManager();
     this._audit = new AuditLog();
     this._policy = new PolicyEngine();

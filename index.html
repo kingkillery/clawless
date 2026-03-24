@@ -163,6 +163,12 @@
             <label for="runner-url">Runner URL</label>
             <input id="runner-url" type="url" placeholder="http://127.0.0.1:6234" />
 
+            <label class="checkbox-label" for="runner-offline">
+              <input id="runner-offline" type="checkbox" />
+              <span>Offline runner mode</span>
+            </label>
+            <small class="helper-text">Disables network access for external-local sessions.</small>
+
             <label for="provider-select">Provider</label>
             <select id="provider-select">
               <option value="anthropic">Anthropic</option>

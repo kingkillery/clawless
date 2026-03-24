@@ -17,6 +17,7 @@ import { normalizeProviderEnv, serializeEnvFile } from './provider-env.js';
 import type { AgentConfig, ContainerEnv, ContainerStatus } from './types.js';
 import type { ContainerBootOptions, ExecutionBackend } from './backend.js';
 import type { PolicyEngine } from './policy.js';
+import type { RunnerNetworkMode } from './types.js';
 
 type RunnerProcessKind = 'shell' | 'gitclaw' | 'agent';
 
@@ -56,9 +57,11 @@ export class ExternalRunnerClient implements ExecutionBackend {
   private apiEnvVars: Record<string, string> = {};
   private lastBootOptions: ContainerBootOptions | null = null;
   private gitService: GitService | null = null;
+  private networkMode: RunnerNetworkMode;
 
-  constructor(runnerUrl?: string) {
+  constructor(runnerUrl?: string, networkMode: RunnerNetworkMode = 'default') {
     this.baseUrl = normalizeRunnerUrl(runnerUrl ?? localStorage.getItem('clawchef_runnerUrl') ?? 'http://127.0.0.1:6234');
+    this.networkMode = networkMode;
   }
 
   get status(): ContainerStatus {
@@ -111,6 +114,7 @@ export class ExternalRunnerClient implements ExecutionBackend {
       method: 'POST',
       body: {
         image,
+        networkMode: this.networkMode,
         workspace,
         cwd: '/home/clawless',
       },

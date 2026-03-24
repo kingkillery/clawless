@@ -10,7 +10,6 @@ import { randomUUID } from 'node:crypto';
 
 const HOST = process.env.CLAWLESS_LOCALD_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.CLAWLESS_LOCALD_PORT ?? '6234');
-const NETWORK_MODE = process.env.CLAWLESS_LOCALD_NETWORK ?? 'default';
 const HOME_DIR = '/home/clawless';
 const ROOT = resolve(tmpdir(), 'clawless-locald');
 const CONTAINER_ENGINE = await detectContainerEngine();
@@ -135,6 +134,7 @@ async function handleCreateSession(req, res) {
     id,
     status: 'booting',
     image: body?.image ?? 'node:20-bookworm-slim',
+    networkMode: body?.networkMode ?? process.env.CLAWLESS_LOCALD_NETWORK ?? 'default',
     rootDir,
     containerId: null,
     processes: new Map(),
@@ -307,7 +307,7 @@ async function startContainer(session) {
     'sleep',
     'infinity',
   ];
-  if (NETWORK_MODE === 'none') {
+  if (session.networkMode === 'none') {
     args.splice(5, 0, '--network', 'none');
   }
   const result = await runContainerEngine(args);

@@ -66,6 +66,8 @@ Then open the UI with the external runtime selected:
 http://localhost:5173/?runtime=external-local
 ```
 
+In the config panel, `Offline runner mode` disables network access for external-local sessions.
+
 <p align="center">
   <img src="screenshot.png" alt="ClawLess — AI Agent building a calculator app inside a WASM sandbox" width="900" />
 </p>

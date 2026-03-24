@@ -64,6 +64,7 @@ interface ClawContainerOptions {
   toolPresets?: Array<string | ToolPresetDefinition>;
   runtime?: 'webcontainer' | 'external-local';
   runnerUrl?: string;
+  runnerNetworkMode?: 'default' | 'none';
   plugins?: ClawContainerPlugin[];
   tabs?: TabDefinition[];
 }
@@ -374,6 +375,7 @@ Configure through the UI config panel or programmatically via options.env:
 Config persisted with `clawchef_` prefix:
 
 - `clawchef_provider`, `clawchef_model`, `clawchef_envVars`, `clawchef_policy`, `clawchef_runtime`, `clawchef_runnerUrl`
+- `clawchef_provider`, `clawchef_model`, `clawchef_envVars`, `clawchef_policy`, `clawchef_runtime`, `clawchef_runnerUrl`, `clawchef_runnerNetworkMode`
 
 ## Security Model
 

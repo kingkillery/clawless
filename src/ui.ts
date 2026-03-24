@@ -1165,12 +1165,14 @@ export class UIManager {
   private restoreConfig(): void {
     const runtime = localStorage.getItem(`${LS_PREFIX}runtime`) ?? 'webcontainer';
     const runnerUrl = localStorage.getItem(`${LS_PREFIX}runnerUrl`) ?? 'http://127.0.0.1:6234';
+    const runnerNetworkMode = localStorage.getItem(`${LS_PREFIX}runnerNetworkMode`) ?? 'default';
     const provider = localStorage.getItem(`${LS_PREFIX}provider`);
     const model    = localStorage.getItem(`${LS_PREFIX}model`);
     const envJson  = localStorage.getItem(`${LS_PREFIX}envVars`);
 
     (document.getElementById('runtime-select') as HTMLSelectElement).value = runtime;
     (document.getElementById('runner-url') as HTMLInputElement).value = runnerUrl;
+    (document.getElementById('runner-offline') as HTMLInputElement).checked = runnerNetworkMode === 'none';
 
     if (provider) {
       (document.getElementById('provider-select') as HTMLSelectElement).value = provider;
@@ -1211,6 +1213,7 @@ export class UIManager {
   private async saveConfig(): Promise<void> {
     const runtime = (document.getElementById('runtime-select') as HTMLSelectElement).value as 'webcontainer' | 'external-local';
     const runnerUrl = (document.getElementById('runner-url') as HTMLInputElement).value.trim() || 'http://127.0.0.1:6234';
+    const runnerNetworkMode = (document.getElementById('runner-offline') as HTMLInputElement).checked ? 'none' : 'default';
     const provider = (document.getElementById('provider-select') as HTMLSelectElement).value;
     const model    = (document.getElementById('model-select') as HTMLInputElement).value.trim();
     const envVars  = this.getEnvRows();
@@ -1228,6 +1231,7 @@ export class UIManager {
 
     localStorage.setItem(`${LS_PREFIX}runtime`, runtime);
     localStorage.setItem(`${LS_PREFIX}runnerUrl`, runnerUrl);
+    localStorage.setItem(`${LS_PREFIX}runnerNetworkMode`, runnerNetworkMode);
     localStorage.setItem(`${LS_PREFIX}provider`, provider);
     localStorage.setItem(`${LS_PREFIX}model`,    model);
     localStorage.setItem(`${LS_PREFIX}envVars`,  JSON.stringify(envVars));
