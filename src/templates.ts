@@ -7,6 +7,8 @@ export interface ContainerTemplate {
   name: string;
   description?: string;
   agent?: AgentConfig | false;
+  runtime?: ClawContainerOptions['runtime'];
+  runnerUrl?: string;
   workspace?: Record<string, string>;
   services?: Record<string, string>;
   env?: Record<string, string>;
@@ -64,6 +66,36 @@ export const OPENCLAW_TEMPLATE: ContainerTemplate = {
   },
 };
 
+/** Built-in Codex CLI template â€” external-local only. */
+export const CODEX_TEMPLATE: ContainerTemplate = {
+  name: 'codex',
+  description: 'OpenAI Codex CLI template',
+  runtime: 'external-local',
+  agent: {
+    kind: 'external-command',
+    package: '@openai/codex',
+    version: 'latest',
+    entry: 'bin/codex.js',
+    command: 'npx -y @openai/codex',
+    args: [],
+  },
+};
+
+/** Built-in Claude Code template â€” external-local only. */
+export const CLAUDE_CODE_TEMPLATE: ContainerTemplate = {
+  name: 'claude-code',
+  description: 'Anthropic Claude Code template',
+  runtime: 'external-local',
+  agent: {
+    kind: 'external-command',
+    package: '@anthropic-ai/claude-code',
+    version: 'latest',
+    entry: 'bin/claude.js',
+    command: 'npx -y @anthropic-ai/claude-code',
+    args: [],
+  },
+};
+
 // ─── Template Registry ────────────────────────────────────────────────────────
 
 export class TemplateRegistry {
@@ -73,6 +105,8 @@ export class TemplateRegistry {
     // Seed with built-in templates
     this.register(GITCLAW_TEMPLATE);
     this.register(OPENCLAW_TEMPLATE);
+    this.register(CODEX_TEMPLATE);
+    this.register(CLAUDE_CODE_TEMPLATE);
   }
 
   register(template: ContainerTemplate): void {
@@ -145,6 +179,8 @@ export function mergeTemplateWithOptions(
 
   // Scalar: options win
   merged.startupScript = options.startupScript ?? template.startupScript;
+  merged.runtime = options.runtime ?? template.runtime;
+  merged.runnerUrl = options.runnerUrl ?? template.runnerUrl;
 
   // Tool presets: template first, options appended
   if ((template.toolPresets?.length ?? 0) > 0 || (options.toolPresets?.length ?? 0) > 0) {
@@ -205,6 +241,15 @@ export function parseTemplateYaml(yaml: string): ContainerTemplate {
       i++;
     } else if (key === 'startupScript') {
       template.startupScript = stripQuotes(value);
+      i++;
+    } else if (key === 'runtime') {
+      const runtime = stripQuotes(value);
+      if (runtime === 'webcontainer' || runtime === 'external-local') {
+        template.runtime = runtime;
+      }
+      i++;
+    } else if (key === 'runnerUrl') {
+      template.runnerUrl = stripQuotes(value);
       i++;
     } else if (key === 'toolPresets') {
       if (value.startsWith('[')) {

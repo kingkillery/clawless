@@ -16,7 +16,11 @@ function waitForTemplateSelection(): Promise<string> {
     buttons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const template = btn.dataset['template'] ?? 'gitclaw';
+        const runtime = btn.dataset['runtime'];
         localStorage.setItem('clawchef_template', template);
+        if (runtime) {
+          localStorage.setItem('clawchef_runtime', runtime);
+        }
         resolve(template);
       });
     });
@@ -26,18 +30,22 @@ function waitForTemplateSelection(): Promise<string> {
 async function boot() {
   const params = new URLSearchParams(window.location.search);
   const template = params.get('template') ?? await waitForTemplateSelection();
+  const templateRuntime = ClawContainer.templates.get(template)?.runtime;
   const toolPresets = params.get('tools')
     ?.split(',')
     .map((value) => value.trim())
     .filter(Boolean);
   const runtime = params.get('runtime')
+    ?? templateRuntime
     ?? localStorage.getItem('clawchef_runtime')
-    ?? 'webcontainer';
+    ?? undefined;
   const runnerUrl = params.get('runner')
     ?? localStorage.getItem('clawchef_runnerUrl')
     ?? 'http://127.0.0.1:6234';
 
-  localStorage.setItem('clawchef_runtime', runtime);
+  if (runtime) {
+    localStorage.setItem('clawchef_runtime', runtime);
+  }
   localStorage.setItem('clawchef_runnerUrl', runnerUrl);
 
   // Hide picker, show loading status
@@ -48,7 +56,12 @@ async function boot() {
   if (status) status.style.display = '';
   if (progressBar) progressBar.style.display = '';
 
-  const cc = new ClawContainer('#app', { template, toolPresets, runtime: runtime as 'webcontainer' | 'external-local', runnerUrl });
+  const cc = new ClawContainer('#app', {
+    template,
+    toolPresets,
+    runtime: runtime as 'webcontainer' | 'external-local' | undefined,
+    runnerUrl,
+  });
   cc.start().catch(console.error);
 
   // Expose SDK globally for console access and external scripts

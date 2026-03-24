@@ -181,7 +181,7 @@ ClawLess is configured through environment variables passed to the `ClawContaine
 
 All runtime state is persisted to `localStorage` under the `clawchef_` prefix, so sessions survive page reloads. Runtime selection and runner URL are persisted too.
 
-Launch URLs can also preload tool presets, for example `?template=openclaw&tools=pptx,spreadsheet`.
+Launch URLs can also preload tool presets, for example `?template=openclaw&tools=pptx,spreadsheet`. Built-in templates now include `gitclaw`, `openclaw`, `codex`, and `claude-code`.
 
 ## Links
 

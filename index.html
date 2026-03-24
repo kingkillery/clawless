@@ -17,16 +17,26 @@
         <h2>ClawLess</h2>
         <div id="template-picker" style="margin:16px 0">
           <p style="font-size:11px;color:#8b949e;margin-bottom:8px;letter-spacing:.3px">Choose your agent template</p>
-          <div style="display:flex;gap:10px;justify-content:center">
-            <button class="tpl-btn" data-template="gitclaw">
-              <span style="font-size:18px">🐙</span>
+                    <div style="display:flex;gap:10px;justify-content:center">
+            <button class="tpl-btn" data-template="gitclaw" data-runtime="webcontainer">
+              <span style="font-size:18px">??</span>
               <strong>GitClaw</strong>
               <span style="font-size:10px;color:#8b949e">A better claw</span>
             </button>
-            <button class="tpl-btn" data-template="openclaw">
-              <span style="font-size:18px">🦞</span>
+            <button class="tpl-btn" data-template="openclaw" data-runtime="webcontainer">
+              <span style="font-size:18px">??</span>
               <strong>OpenClaw</strong>
               <span style="font-size:10px;color:#8b949e">A famous claw</span>
+            </button>
+            <button class="tpl-btn" data-template="codex" data-runtime="external-local">
+              <span style="font-size:18px">?</span>
+              <strong>Codex</strong>
+              <span style="font-size:10px;color:#8b949e">OpenAI CLI runner</span>
+            </button>
+            <button class="tpl-btn" data-template="claude-code" data-runtime="external-local">
+              <span style="font-size:18px">?</span>
+              <strong>Claude Code</strong>
+              <span style="font-size:10px;color:#8b949e">Anthropic CLI runner</span>
             </button>
           </div>
         </div>
@@ -186,3 +196,4 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+

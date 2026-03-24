@@ -169,7 +169,7 @@ interface ContainerTemplate {
 }
 ```
 
-Built-in template: `gitclaw` (gitclaw@1.1.4 agent).
+Built-in templates: `gitclaw` (gitclaw@1.1.4 agent), `openclaw` (browser-native), `codex` (external-local), and `claude-code` (external-local).
 
 YAML template format example:
 
@@ -193,7 +193,7 @@ startupScript: npm run build
 
 Register via `ClawContainer.registerTemplate(template)` or pass template name/object in options.
 
-Templates may also declare `runtime`, `runnerUrl`, `image`, and `kind`-style launch hints through their agent configuration.
+Templates may also declare `runtime`, `runnerUrl`, `image`, and `kind`-style launch hints through their agent configuration. Codex and Claude Code presets default to `external-local`.
 
 Tool presets let you pre-install common pure-JS tool packages and prompt docs at launch time. Built-ins currently include `pptx`, `spreadsheet`, `pdf`, and `charts`. You can also pass them through launch URLs such as `?template=openclaw&tools=pptx,spreadsheet`.
 
